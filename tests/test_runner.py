@@ -46,10 +46,25 @@ class RunnerTests(unittest.TestCase):
             self.assertLess(min(y for _, y, _ in poses), TOP + STEP - 30)
 
     def test_four_column_gap_is_not_skipped(self):
-        self.assertEqual(len(route([(0, 1, 1), (5, 1, 1)], 6)), 8)
+        points = route([(0, 1, 1), (5, 1, 1)], 6)
+        self.assertTrue(any(y == FLOOR for _, y in points[2:-2]))
 
-    def test_two_row_drop_is_not_skipped(self):
-        self.assertEqual(len(route([(0, 1, 1), (1, 3, 1), (2, 1, 1)], 3)), 5)
+    def test_shallow_drops_are_skipped(self):
+        for depth in (1, 2):
+            self.assertEqual(len(route([(0, 1, 1), (1, 1 + depth, 1), (2, 1, 1)], 3)), 4)
+
+    def test_ascent_takes_off_two_columns_earlier(self):
+        points = route([(c, 4, 1) for c in range(4)] + [(4, 1, 1)], 5)
+        self.assertEqual(points[-2][0] - points[-3][0], 3 * STEP)
+
+    def test_ascent_does_not_rewind_over_height_change(self):
+        points = route([(0, 5, 1), (1, 4, 1), (2, 1, 1)], 3)
+        self.assertEqual(points[-2][0] - points[-3][0], STEP)
+
+    def test_ground_approach_takes_off_early(self):
+        points = route([(4, 1, 1)], 5)
+        self.assertEqual(points[-3][1], FLOOR)
+        self.assertEqual(points[-2][0] - points[-3][0], 3 * STEP)
 
     def test_no_bank_means_normal_descent(self):
         self.assertEqual(len(route([(0, 1, 1)], 4)), 6)

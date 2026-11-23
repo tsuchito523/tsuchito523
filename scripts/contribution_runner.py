@@ -7,7 +7,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 STEP, CELL, LEFT, TOP, FLOOR = 17, 13, 38, 108, 244
@@ -66,19 +66,33 @@ def route(cells, columns):
     while col < columns:
         points.append((LEFT + col * STEP + CELL / 2,
                        heights[col]))
-        # A gap is 1-3 intervening columns at least three rows below
-        # takeoff. Land on the first green bank above that depth threshold.
-        if col in surface:
-            bank = col + 1
-            while bank < columns and heights[bank] - heights[col] >= 3 * STEP:
-                bank += 1
-            gap = bank - col - 1
-            if 1 <= gap <= 3 and bank in surface:
-                col = bank
-                continue
+        # Cross even shallow valleys. A bank rises above every intervening
+        # column; it need not be as high as the takeoff platform.
+        bank = None
+        if col in surface and col + 1 < columns and heights[col + 1] > heights[col]:
+            valley_top = heights[col + 1]
+            for candidate in range(col + 2, min(columns, col + 5)):
+                if candidate in surface and heights[candidate] < valley_top:
+                    bank = candidate
+                    break
+                valley_top = min(valley_top, heights[candidate])
+        if bank is not None:
+            col = bank
+            continue
         col += 1
     points.append((LEFT + columns * STEP + 45, FLOOR))
-    return points
+    # For an ascent, use up to two additional flat columns as takeoff room.
+    # Never rewind across a previous landing or another change in height.
+    adjusted = []
+    for point in points:
+        if adjusted and point[1] < adjusted[-1][1]:
+            for _ in range(2):
+                if (len(adjusted) < 2 or adjusted[-2][1] != adjusted[-1][1]
+                        or adjusted[-1][0] - adjusted[-2][0] > STEP * 1.1):
+                    break
+                adjusted.pop()
+        adjusted.append(point)
+    return adjusted
 
 
 def motion(points):
@@ -111,17 +125,12 @@ def render(days, user, output):
     width = LEFT * 2 + columns * STEP
     canvas = Image.new('RGB', (width, HEIGHT), '#0d1117')
     d = ImageDraw.Draw(canvas)
-    font = ImageFont.load_default(size=13)
-    small = ImageFont.load_default(size=11)
-    d.text((LEFT, 20), 'CONTRIBUTION RUNNER', fill='#f7b7bd', font=font)
-    d.text((LEFT, 43), f'@{user}  /  {days[0]["date"]} - {days[-1]["date"]}', fill='#8b949e', font=small)
     for col, row, level in cells:
         x, y = LEFT + col * STEP, TOP + row * STEP
         d.rounded_rectangle((x, y, x + CELL - 1, y + CELL - 1), radius=2, fill=COLORS[level])
     d.line((0, FLOOR, width, FLOOR), fill='#36414d', width=2)
     for x in range(0, width, 12):
         d.line((x, FLOOR + 6, x + 4, FLOOR + 6), fill='#202b36')
-    d.text((LEFT, HEIGHT - 21), 'A little progress, a little adventure.', fill='#8b949e', font=small)
     for i, color in enumerate(COLORS):
         x = width - LEFT - 5 * 15 + i * 15
         d.rounded_rectangle((x, HEIGHT - 21, x + 10, HEIGHT - 11), radius=2, fill=color)
