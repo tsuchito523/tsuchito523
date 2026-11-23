@@ -45,9 +45,26 @@ class RunnerTests(unittest.TestCase):
             self.assertTrue(all(p.startswith('Jump') for _, _, p in poses))
             self.assertLess(min(y for _, y, _ in poses), TOP + STEP - 30)
 
-    def test_four_column_gap_is_not_skipped(self):
-        points = route([(0, 1, 1), (5, 1, 1)], 6)
-        self.assertTrue(any(y == FLOOR for _, y in points[2:-2]))
+    def test_long_deep_gap_is_crossed(self):
+        for gap in (4, 8, 20):
+            points = route([(0, 1, 1), (gap + 1, 1, 1)], gap + 2)
+            self.assertEqual(len(points), 4)
+            self.assertTrue(all(p.startswith('Jump') and y > 18
+                                for _, y, p in motion(points[1:3])))
+
+    def test_long_shallow_gap_still_descends(self):
+        points = route([(0, 1, 1), (5, 1, 1)] + [(c, 2, 1) for c in range(1, 5)], 6)
+        self.assertTrue(any(y == TOP + 2 * STEP for _, y in points))
+
+    def test_descent_lands_farther_on_flat_ground(self):
+        points = route([(0, 1, 1)], 5)
+        self.assertEqual(points[2][0] - points[1][0], 3 * STEP)
+        self.assertEqual(points[2][1], FLOOR)
+
+    def test_descent_stops_before_obstacle(self):
+        points = route([(0, 6, 1), (2, 6, 1)], 3)
+        # No deep valley here, but the short-gap rule bridges it safely.
+        self.assertEqual(len(points), 4)
 
     def test_shallow_drops_are_skipped(self):
         for depth in (1, 2):
@@ -67,7 +84,8 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(points[-2][0] - points[-3][0], 3 * STEP)
 
     def test_no_bank_means_normal_descent(self):
-        self.assertEqual(len(route([(0, 1, 1)], 4)), 6)
+        points = route([(0, 1, 1)], 4)
+        self.assertEqual(points[2][1], FLOOR)
 
     def test_empty_gap_and_different_height_bank(self):
         points = route([(0, 1, 1), (3, 2, 1)], 4)

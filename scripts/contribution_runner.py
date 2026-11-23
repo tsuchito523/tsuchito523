@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 STEP, CELL, LEFT, TOP, FLOOR = 17, 13, 38, 108, 244
 HEIGHT, FPS = 286, 20
+SPRITE_SIZE = 30
 COLORS = ['#202b36', '#0e4429', '#006d32', '#26a641', '#39d353']
 
 
@@ -69,7 +70,15 @@ def route(cells, columns):
         # Cross even shallow valleys. A bank rises above every intervening
         # column; it need not be as high as the takeoff platform.
         bank = None
-        if col in surface and col + 1 < columns and heights[col + 1] > heights[col]:
+        # Deep valleys may span more than three columns. Stay airborne until
+        # the first green bank that rises out of the three-row-deep region.
+        if col in surface and col + 1 < columns and heights[col + 1] - heights[col] >= 3 * STEP:
+            candidate = col + 1
+            while candidate < columns and heights[candidate] - heights[col] >= 3 * STEP:
+                candidate += 1
+            if candidate in surface:
+                bank = candidate
+        if bank is None and col in surface and col + 1 < columns and heights[col + 1] > heights[col]:
             valley_top = heights[col + 1]
             for candidate in range(col + 2, min(columns, col + 5)):
                 if candidate in surface and heights[candidate] < valley_top:
@@ -78,6 +87,15 @@ def route(cells, columns):
                 valley_top = min(valley_top, heights[candidate])
         if bank is not None:
             col = bank
+            continue
+        # If descending onto a clear flat stretch, land up to two columns
+        # farther ahead instead of dropping beside the ledge.
+        if col + 1 < columns and heights[col + 1] > heights[col]:
+            landing = col + 1
+            while (landing < min(columns - 1, col + 3)
+                   and heights[landing + 1] == heights[landing]):
+                landing += 1
+            col = landing
             continue
         col += 1
     points.append((LEFT + columns * STEP + 45, FLOOR))
@@ -111,6 +129,8 @@ def motion(points):
             duration = max(duration, 0.8)
             count = math.ceil(duration * FPS)
             arc = max(arc, 36 + (x1 - x0) * 0.15)
+        # Long crossings must remain inside the image, including the sprite.
+        arc = min(arc, min(y0, y1) - SPRITE_SIZE - 8)
         for n in range(count):
             t = n / count
             x = x0 + (x1 - x0) * t
@@ -137,7 +157,7 @@ def render(days, user, output):
     sprites = {}
     for name in ['Run0', 'Run1', 'Run2', 'Run3', 'Jump0', 'Jump1', 'Jump2']:
         # Preserve original shared canvas and foot baseline; no per-frame crop.
-        sprites[name] = Image.open(ROOT / f'assets/runner/{name}.png').convert('RGBA').resize((38, 38), Image.Resampling.LANCZOS)
+        sprites[name] = Image.open(ROOT / f'assets/runner/{name}.png').convert('RGBA').resize((SPRITE_SIZE, SPRITE_SIZE), Image.Resampling.LANCZOS)
     # One shared palette eliminates color flicker between GIF frames.
     sample = canvas.copy()
     sample.paste(sprites['Run0'], (LEFT, 65), sprites['Run0'])
@@ -146,7 +166,7 @@ def render(days, user, output):
     poses = motion(route(cells, columns))
     for x, feet, pose in poses:
         frame = canvas.copy()
-        frame.paste(sprites[pose], (round(x - 19), round(feet - 38)), sprites[pose])
+        frame.paste(sprites[pose], (round(x - SPRITE_SIZE / 2), round(feet - SPRITE_SIZE)), sprites[pose])
         frames.append(frame.quantize(palette=palette, dither=Image.Dither.NONE))
     output.parent.mkdir(parents=True, exist_ok=True)
     frames[0].save(output, save_all=True, append_images=frames[1:], duration=1000 // FPS,
