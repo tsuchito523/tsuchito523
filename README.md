@@ -1,5 +1,3 @@
-![Profile views](https://komarev.com/ghpvc/?username=tsuchito523&label=Profile%20views&color=0e75b6&style=flat)
-
 ## 👋 My Profile
 
 - 👤 **Name:** tsuchito523

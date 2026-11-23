@@ -1,0 +1,29 @@
+# Contribution runner
+
+README先頭のGIFは、提供されたRun0〜3・Jump0〜2のPNGを使った自動再生アニメーションです。
+緑のマスは実際のGitHubの草です。各週の最上部の緑マスを足場にし、同じ高さでは走り、段差ではジャンプします。
+草のない週は画面下の地面を走ります。キャラクターは左から右へ進み、画面外に出てからループします。
+GIFをクリックすると静止画を表示します。カーソル操作に反応するゲームではありません。
+
+## 再生成
+
+```sh
+python -m pip install -r requirements.txt
+python scripts/contribution_runner.py --fetch
+python -m unittest discover -s tests -v
+```
+
+`--fetch` を省略すると保存済みの `data/contributions.json` で生成します。
+公開プロフィールのカレンダーHTMLから日付と濃度を取得するため、PATは不要です。
+GitHubのHTML仕様が変わった場合はパーサーの修正が必要になることがあります。
+取得が不完全なら処理を失敗させ、公開済み画像を上書きしません。
+
+## GitHubでの更新
+
+mainへpushすると、生成スクリプト等の変更時・手動実行・毎日0:17 JSTのスケジュールでActionsが生成します（開始時刻は遅れる場合があります）。
+画像と草データをmainへbotがcommit・pushします。ローカルで作業を再開する際は `git pull --ff-only` で更新を取得してください。
+ブランチ保護等でbotのpushが禁止されている場合は更新できません。
+人間のpushと競合した場合も強制pushはせず停止します。Actionsから再実行してください。
+
+素材の原本は `assets/runner/` に保持しています。生成時に共通の500×500キャンバスを38×38へ縮小するため、コマごとの足元の基準位置がずれません。
+確定した生成画像もリポジトリに含めているので、初回のActions実行前でもREADMEに表示できます。
