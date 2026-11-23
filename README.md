@@ -1,3 +1,5 @@
+[![草を足場に走ったりジャンプしたりするフラッグ君](assets/contribution-runner.gif)](assets/contribution-runner.png)
+
 ## 👋 My Profile
 
 - 👤 **Name:** tsuchito523
