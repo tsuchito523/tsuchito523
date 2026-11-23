@@ -100,8 +100,6 @@ def render(days, user, output):
     for col, row, level in cells:
         x, y = LEFT + col * STEP, TOP + row * STEP
         d.rounded_rectangle((x, y, x + CELL - 1, y + CELL - 1), radius=2, fill=COLORS[level])
-        if level:
-            d.line((x + 2, y + 1, x + CELL - 3, y + 1), fill='#69d88a')
     d.line((0, FLOOR, width, FLOOR), fill='#36414d', width=2)
     for x in range(0, width, 12):
         d.line((x, FLOOR + 6, x + 4, FLOOR + 6), fill='#202b36')
