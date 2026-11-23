@@ -52,6 +52,16 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue(any(y < takeoff[1] for _, y, _ in poses))
         self.assertIn('Jump0', {p for _, _, p in poses})
 
+    def test_fall_accelerates_gradually(self):
+        poses = motion([(0, TOP), (3 * STEP, FLOOR)])
+        airborne = [y for _, y, _ in poses if y > TOP]
+        distances = [b - a for a, b in zip(airborne, airborne[1:])]
+        self.assertGreaterEqual(len(distances), 5)
+        self.assertTrue(all(b > a for a, b in zip(distances, distances[1:])))
+        accelerations = [b - a for a, b in zip(distances, distances[1:])]
+        for acceleration in accelerations:
+            self.assertAlmostEqual(acceleration, accelerations[0])
+
     def test_deep_gaps_up_to_three_columns_are_crossed(self):
         for gap in (1, 2, 3):
             cells = [(0, 1, 1), (gap + 1, 1, 1)] + [(c, 4, 1) for c in range(1, gap + 1)]

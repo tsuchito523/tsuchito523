@@ -133,7 +133,10 @@ def motion(points):
         if y0 != y1:
             duration = max(duration, 0.5 + abs(y1 - y0) / 350)
         if falling:
-            duration = max(0.15, duration * 0.5)
+            # Constant gravity: start with zero vertical speed, then accelerate.
+            # Scale flight time with sqrt(height), rather than halving all falls.
+            edge_fraction = min(0.45, (CELL / 2) / (x1 - x0))
+            duration = max(0.3, math.sqrt(2 * (y1 - y0) / 1000) / (1 - edge_fraction))
         count = math.ceil(duration * FPS)
         # Parabola remains above the segment. Landing on every green block
         # preserves the original calendar rather than inventing contributions.
