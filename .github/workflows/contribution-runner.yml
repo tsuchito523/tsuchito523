@@ -8,6 +8,7 @@ on:
     paths:
       - 'scripts/contribution_runner.py'
       - 'assets/runner/**'
+      - 'assets/fonts/**'
       - 'requirements.txt'
       - '.github/workflows/contribution-runner.yml'
 permissions:

@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="assets/profile-heading.png" width="977" alt="Welcome to Tsuchito's profile" />
-</p>
-
-[![草を足場に走ったりジャンプしたりするフラッグ君](assets/contribution-runner.gif)](assets/contribution-runner.png)
+[![Welcome to Tsuchito's profile — 草を足場に走ったりジャンプしたりするフラッグ君](assets/contribution-runner.gif)](assets/contribution-runner.png)
 
 ## 👋 My Profile
 

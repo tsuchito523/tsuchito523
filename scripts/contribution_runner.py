@@ -7,7 +7,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 STEP, CELL, LEFT, TOP, FLOOR = 17, 13, 38, 108, 244
@@ -166,6 +166,14 @@ def render(days, user, output):
     width = LEFT * 2 + columns * STEP
     canvas = Image.new('RGB', (width, HEIGHT), '#0d1117')
     d = ImageDraw.Draw(canvas)
+    # Render the title into the background, before compositing the character.
+    # Sharing one canvas removes the separate heading image's vertical gap.
+    font = ImageFont.truetype(str(ROOT / 'assets/fonts/Outfit.ttf'), 38)
+    font.set_variation_by_axes([600])
+    title = "Welcome to Tsuchito's profile"
+    left, top, right, bottom = d.textbbox((0, 0), title, font=font)
+    d.text(((width - (right - left)) / 2 - left, 24 - top),
+           title, font=font, fill='white')
     for col, row, level in cells:
         x, y = LEFT + col * STEP, TOP + row * STEP
         d.rounded_rectangle((x, y, x + CELL - 1, y + CELL - 1), radius=2, fill=COLORS[level])
