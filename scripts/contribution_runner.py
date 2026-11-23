@@ -54,6 +54,13 @@ def layout(days):
     return cells, max(c[0] for c in cells) + 1
 
 
+class Route(list):
+    """Waypoints with explicit bank targets, distinguishing leaps from falls."""
+    def __init__(self, points, jump_targets):
+        super().__init__(points)
+        self.jump_targets = jump_targets
+
+
 def route(cells, columns):
     # Use the topmost green block in each week: no higher solid block can
     # intersect the character. Empty weeks become a ground-running section.
@@ -62,6 +69,7 @@ def route(cells, columns):
         if level:
             surface[col] = min(surface.get(col, 7), row)
     points = [(-30, FLOOR)]
+    jump_targets = set()
     heights = [TOP + surface[c] * STEP if c in surface else FLOOR for c in range(columns)]
     col = 0
     while col < columns:
@@ -86,6 +94,7 @@ def route(cells, columns):
                     break
                 valley_top = min(valley_top, heights[candidate])
         if bank is not None:
+            jump_targets.add(LEFT + bank * STEP + CELL / 2)
             col = bank
             continue
         # If descending onto a clear flat stretch, land up to two columns
@@ -110,14 +119,16 @@ def route(cells, columns):
                     break
                 adjusted.pop()
         adjusted.append(point)
-    return adjusted
+    return Route(adjusted, jump_targets)
 
 
 def motion(points):
     frames = []
     for (x0, y0), (x1, y1) in zip(points, points[1:]):
-        big_jump = x1 - x0 > STEP * 1.5 and y0 < FLOOR and y1 < FLOOR
-        jump = y0 != y1 or big_jump
+        crossing = isinstance(points, Route) and x1 in points.jump_targets
+        big_jump = crossing or (x1 - x0 > STEP * 1.5 and y1 <= y0 and y0 < FLOOR and y1 < FLOOR)
+        falling = y1 > y0 and not crossing
+        jump = y1 < y0 or big_jump
         duration = max(0.22, (x1 - x0) / 85)
         if y0 != y1:
             duration = max(duration, 0.5 + abs(y1 - y0) / 350)
@@ -136,6 +147,14 @@ def motion(points):
             x = x0 + (x1 - x0) * t
             y = y0 + (y1 - y0) * t - (4 * arc * t * (1 - t) if jump else 0)
             pose = f'Jump{0 if t < .34 else 1 if t < .70 else 2}' if jump else f'Run{(len(frames) // 2) % 4}'
+            if falling:
+                # Walk from the block center to its edge before gravity takes
+                # over. No upward impulse; use the descending sprite in air.
+                edge = min(0.45, (CELL / 2) / (x1 - x0))
+                fall_t = max(0.0, (t - edge) / (1 - edge))
+                y = y0 + (y1 - y0) * fall_t ** 2
+                if t >= edge:
+                    pose = 'Jump2'
             frames.append((x, y, pose))
     return frames
 

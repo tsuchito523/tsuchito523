@@ -28,13 +28,29 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual({pose for _, _, pose in poses}, {'Run0', 'Run1', 'Run2', 'Run3'})
 
     def test_jump_uses_all_poses_and_moves_forward(self):
-        poses = motion([(0, FLOOR), (40, TOP), (80, FLOOR)])
+        poses = motion([(0, FLOOR), (40, TOP)])
         self.assertEqual({p for _, _, p in poses}, {'Jump0', 'Jump1', 'Jump2'})
         self.assertTrue(all(a[0] < b[0] for a, b in zip(poses, poses[1:])))
         self.assertTrue(all(0 < y <= FLOOR for _, y, _ in poses))
 
     def test_equal_height_blocks_use_run_cycle(self):
         self.assertTrue(all(p.startswith('Run') for _, _, p in motion([(0, TOP), (STEP, TOP)])))
+
+    def test_fall_walks_off_without_upward_motion(self):
+        for distance in (STEP, 3 * STEP):
+            poses = motion([(0, TOP), (distance, FLOOR)])
+            self.assertTrue(poses[0][2].startswith('Run'))
+            self.assertTrue(all(y >= TOP for _, y, _ in poses))
+            self.assertTrue(all(a[1] <= b[1] for a, b in zip(poses, poses[1:])))
+            self.assertTrue(all(p == 'Jump2' for _, y, p in poses if y > TOP))
+            self.assertNotIn('Jump0', {p for _, _, p in poses})
+
+    def test_lower_bank_crossing_still_jumps(self):
+        points = route([(0, 1, 1), (3, 2, 1)], 4)
+        takeoff, bank = points[1], points[2]
+        poses = [p for p in motion(points) if takeoff[0] <= p[0] < bank[0]]
+        self.assertTrue(any(y < takeoff[1] for _, y, _ in poses))
+        self.assertIn('Jump0', {p for _, _, p in poses})
 
     def test_deep_gaps_up_to_three_columns_are_crossed(self):
         for gap in (1, 2, 3):
