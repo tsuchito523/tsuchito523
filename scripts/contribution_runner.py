@@ -132,6 +132,8 @@ def motion(points):
         duration = max(0.22, (x1 - x0) / 85)
         if y0 != y1:
             duration = max(duration, 0.5 + abs(y1 - y0) / 350)
+        if falling:
+            duration = max(0.15, duration * 0.5)
         count = math.ceil(duration * FPS)
         # Parabola remains above the segment. Landing on every green block
         # preserves the original calendar rather than inventing contributions.
