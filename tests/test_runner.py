@@ -1,8 +1,13 @@
 import unittest
-from scripts.contribution_runner import CalendarParser, layout, route, motion, FLOOR, TOP, STEP
+from scripts.contribution_runner import CalendarParser, layout, month_labels, route, motion, FLOOR, TOP, STEP
 
 
 class RunnerTests(unittest.TestCase):
+    def test_month_labels_align_across_year_boundary(self):
+        days = [{'date': d, 'level': 0} for d in
+                ['2025-11-23', '2025-12-01', '2026-01-01', '2026-11-23']]
+        self.assertEqual(month_labels(days), [(0, 'Nov'), (1, 'Dec'), (5, 'Jan'), (52, 'Nov')])
+
     def test_calendar_attributes_and_duplicates(self):
         p = CalendarParser()
         p.feed('<td data-level="3" data-date="2026-11-23"></td><rect data-date="2026-11-23" data-level="3"/>')

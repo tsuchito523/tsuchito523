@@ -54,6 +54,28 @@ def layout(days):
     return cells, max(c[0] for c in cells) + 1
 
 
+def month_labels(days):
+    """Label week columns in the same Sunday-first rolling calendar."""
+    first = date.fromisoformat(days[0]['date'])
+    sunday = first - timedelta(days=(first.weekday() + 1) % 7)
+    names = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+    labels = []
+    previous = None
+    for day in days:
+        current = date.fromisoformat(day['date'])
+        key = (current.year, current.month)
+        if key != previous:
+            col = (current - sunday).days // 7
+            # A month near the end of the first week can share a column.
+            if labels and col == labels[-1][0]:
+                labels[-1] = (col, names[current.month - 1])
+            else:
+                labels.append((col, names[current.month - 1]))
+            previous = key
+    return labels
+
+
 class Route(list):
     """Waypoints with explicit bank targets, distinguishing leaps from falls."""
     def __init__(self, points, jump_targets):
@@ -177,6 +199,13 @@ def render(days, user, output):
     left, top, right, bottom = d.textbbox((0, 0), title, font=font)
     d.text(((width - (right - left)) / 2 - left, 24 - top),
            title, font=font, fill='white')
+    month_font = ImageFont.truetype(str(ROOT / 'assets/fonts/Outfit.ttf'), 12)
+    month_font.set_variation_by_axes([400])
+    label_end = 0
+    for col, label in month_labels(days):
+        label_x = max(LEFT + col * STEP, label_end + 5)
+        d.text((label_x, TOP - 23), label, font=month_font, fill='#c9d1d9')
+        label_end = label_x + d.textlength(label, font=month_font)
     for col, row, level in cells:
         x, y = LEFT + col * STEP, TOP + row * STEP
         d.rounded_rectangle((x, y, x + CELL - 1, y + CELL - 1), radius=2, fill=COLORS[level])
