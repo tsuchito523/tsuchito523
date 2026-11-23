@@ -23,7 +23,9 @@
 ### 📜 最近の参拝記録
 
 <!-- OMIKUJI:START -->
-まだ参拝者はいません。最初のおみくじを引いてみてください 🌸
+| 参拝日（日本時間） | 参拝者 | 運勢 | お告げ |
+| --- | --- | --- | --- |
+| 2026-11-23 | [tsuchito523](https://github.com/tsuchito523) | 🌿 中吉 | [結果を見る](https://github.com/tsuchito523/tsuchito523/issues/1) |
 <!-- OMIKUJI:END -->
 
 ## 🌟 GitHub Stats
