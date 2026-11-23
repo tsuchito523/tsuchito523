@@ -6,32 +6,10 @@
 
 ## Skills
 
-### Languages
-
-![Python, C, C#](https://skillicons.dev/icons?i=python,c,cs&theme=dark)
-
-Python · C · C#
-
-### Physical Computing
-
-![Arduino](https://skillicons.dev/icons?i=arduino&theme=dark)
-
-Arduino
-
-### Game Development
-
-![Unity](https://skillicons.dev/icons?i=unity&theme=dark)
-
-Unity
-
-### Design & Creation
-
 <p>
-  <img src="https://skillicons.dev/icons?i=blender,figma&amp;theme=dark" height="48" alt="Blender, Figma" />
+  <img src="https://skillicons.dev/icons?i=python,c,cs,arduino,unity,blender,figma&amp;theme=dark" height="48" alt="Python, C, C#, Arduino, Unity, Blender, Figma" />
   <img src="https://www.clipstudio.net/view/img/common/logo/icon/apple-touch-icon.png" width="48" height="48" alt="CLIP STUDIO PAINT" />
 </p>
-
-Blender · Figma · CLIP STUDIO PAINT
 
 ## My Stats
 
