@@ -61,9 +61,22 @@ def route(cells, columns):
         if level:
             surface[col] = min(surface.get(col, 7), row)
     points = [(-30, FLOOR)]
-    for col in range(columns):
+    heights = [TOP + surface[c] * STEP if c in surface else FLOOR for c in range(columns)]
+    col = 0
+    while col < columns:
         points.append((LEFT + col * STEP + CELL / 2,
-                       TOP + surface[col] * STEP if col in surface else FLOOR))
+                       heights[col]))
+        # A gap is 1-3 intervening columns at least three rows below
+        # takeoff. Land on the first green bank above that depth threshold.
+        if col in surface:
+            bank = col + 1
+            while bank < columns and heights[bank] - heights[col] >= 3 * STEP:
+                bank += 1
+            gap = bank - col - 1
+            if 1 <= gap <= 3 and bank in surface:
+                col = bank
+                continue
+        col += 1
     points.append((LEFT + columns * STEP + 45, FLOOR))
     return points
 
@@ -71,7 +84,8 @@ def route(cells, columns):
 def motion(points):
     frames = []
     for (x0, y0), (x1, y1) in zip(points, points[1:]):
-        jump = y0 != y1
+        big_jump = x1 - x0 > STEP * 1.5 and y0 < FLOOR and y1 < FLOOR
+        jump = y0 != y1 or big_jump
         duration = max(0.22, (x1 - x0) / 85)
         if y0 != y1:
             duration = max(duration, 0.5 + abs(y1 - y0) / 350)
@@ -79,6 +93,10 @@ def motion(points):
         # Parabola remains above the segment. Landing on every green block
         # preserves the original calendar rather than inventing contributions.
         arc = 13 if y0 == y1 else 25 + abs(y1 - y0) * 0.28
+        if big_jump:
+            duration = max(duration, 0.8)
+            count = math.ceil(duration * FPS)
+            arc = max(arc, 36 + (x1 - x0) * 0.15)
         for n in range(count):
             t = n / count
             x = x0 + (x1 - x0) * t

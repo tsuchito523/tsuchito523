@@ -34,7 +34,30 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue(all(0 < y <= FLOOR for _, y, _ in poses))
 
     def test_equal_height_blocks_use_run_cycle(self):
-        self.assertTrue(all(p.startswith('Run') for _, _, p in motion([(0, TOP), (100, TOP)])))
+        self.assertTrue(all(p.startswith('Run') for _, _, p in motion([(0, TOP), (STEP, TOP)])))
+
+    def test_deep_gaps_up_to_three_columns_are_crossed(self):
+        for gap in (1, 2, 3):
+            cells = [(0, 1, 1), (gap + 1, 1, 1)] + [(c, 4, 1) for c in range(1, gap + 1)]
+            points = route(cells, gap + 2)
+            self.assertEqual(len(points), 4)  # entry, takeoff, bank, exit
+            poses = motion(points[1:3])
+            self.assertTrue(all(p.startswith('Jump') for _, _, p in poses))
+            self.assertLess(min(y for _, y, _ in poses), TOP + STEP - 30)
+
+    def test_four_column_gap_is_not_skipped(self):
+        self.assertEqual(len(route([(0, 1, 1), (5, 1, 1)], 6)), 8)
+
+    def test_two_row_drop_is_not_skipped(self):
+        self.assertEqual(len(route([(0, 1, 1), (1, 3, 1), (2, 1, 1)], 3)), 5)
+
+    def test_no_bank_means_normal_descent(self):
+        self.assertEqual(len(route([(0, 1, 1)], 4)), 6)
+
+    def test_empty_gap_and_different_height_bank(self):
+        points = route([(0, 1, 1), (3, 2, 1)], 4)
+        self.assertEqual(len(points), 4)
+        self.assertEqual(points[2][1], TOP + 2 * STEP)
 
 
 if __name__ == '__main__':
